@@ -3,7 +3,6 @@
 int n;
 int closure[20][20];
 int visited[20];
-
 void epsilon(int state)
 {
     int i;
