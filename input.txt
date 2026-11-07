@@ -1,2 +1,17 @@
-A = B + C
-M = G * D
+#include <stdio.h>
+
+int main()
+{
+    int a = 10;
+    int b = 20;
+
+    // This is a single line comment
+
+    float c = 30;
+    char ch = 'A';
+
+    a = a + b;
+    printf("Hello World");
+
+    return 0;
+}

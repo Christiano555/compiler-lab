@@ -1,0 +1,147 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+int iskeyword(char s[])
+{
+    char kw[15][30]={"int","float","char","long","break","continue","return","else","if","for","while","include","switch","do","goto"};
+    int i=0;
+    for(i=0;i<14;i++)
+    {
+        if(strcmp(s,kw[i])==0)
+            return 1;
+    }
+    return 0;
+}
+
+void printfile(FILE *fp)
+{
+    char line[200];
+    int n=1;
+    printf("Input program:-\n");
+    while(fgets(line,sizeof(line),fp)!=NULL)
+    {
+        printf("%d : %s",n++,line);
+    }
+    printf("\n");
+}
+
+int main()
+{
+    FILE *fp;
+    char lexeme[50],token[50];
+    int line=1,tokenno=1,c,next,quote,i;
+
+    fp=fopen("input.txt","r");
+    if(fp==NULL)
+    {
+        printf("File not found\n");
+        return 0;
+    }
+    printfile(fp);
+    rewind(fp);
+    printf("%-10s %-10s %-18s %s\n","Line","Token No","Token","Lexeme");
+
+    while((c=getc(fp))!=EOF)
+    {
+        if(c=='\n')
+        {
+            line++;
+            continue;
+        }
+        if(c==' '||c=='\t')
+            continue;
+        if(isalpha(c)||c=='_')
+        {
+            i=0;
+            while(isalnum(c)||c=='_')
+            {
+                lexeme[i++]=c;
+                c=getc(fp);
+            }
+            lexeme[i]='\0';
+            if(c!=EOF)
+                ungetc(c,fp);
+            strcpy(token,iskeyword(lexeme)?"Keyword":"Identifier");
+        }
+        else if(isdigit(c))
+        {
+            i=0;
+            while(isdigit(c)||c=='.')
+            {
+                lexeme[i++]=c;
+                c=getc(fp);
+            }
+            lexeme[i]='\0';
+            if(c!=EOF)
+                ungetc(c,fp);
+            strcpy(token,"Numeric Literal");
+        }
+        else if(c=='"'||c=='\'')
+        {
+            quote=c;
+            i=0;
+            lexeme[i++]=c;
+            while((c=getc(fp))!=quote&&c!=EOF)
+            {
+                lexeme[i++]=c;
+            }
+            if(c!=EOF)
+            {
+                lexeme[i++]=c;
+            }
+            lexeme[i]='\0';
+            strcpy(token,quote=='"'?"String literal": "Character literal");
+        }
+        else if(c=='/')
+        {
+            c=getc(fp);
+            if(c=='/')
+            {
+                while((c=getc(fp))!='\n'&&c!=EOF);
+                if(c=='\n')
+                {
+                    line++;
+                    continue;
+                }
+            }
+            else
+            {
+                if(c!=EOF)
+                    ungetc(c,fp);
+                strcpy(lexeme,"/");
+                strcpy(token,"operator");        
+            }
+        }
+        else if(strchr("+=-*&%!|<>",c)!=NULL)
+        {
+            i=0;
+            next=getc(fp);
+            lexeme[0]=c;
+            if(((c=='!'||c=='='||c=='>'||c=='<')&&(next=='=')) || (c=='+' && next=='+') || (c=='&' && next=='&') || (c=='|' && next=='|') || (c=='-' && next=='-') )
+            {
+                lexeme[1]=next;
+                lexeme[2]='\0';
+            }
+            else
+            {
+                lexeme[1]='\0';
+                if(next!=EOF)
+                {
+                    ungetc(next,fp);
+                }
+            }
+            strcpy(token,"operator");
+        }
+        else
+        {
+            lexeme[0]=c;
+            lexeme[1]='\0';
+            if(strchr("{}[]()#@,.;",c)!=NULL)
+                strcpy(token,"Special character");
+            else
+                strcpy(token,"Unknown");
+        }
+        printf("%-10d %-10d %-18s %s\n",line,tokenno++,token,lexeme);
+    }
+}
